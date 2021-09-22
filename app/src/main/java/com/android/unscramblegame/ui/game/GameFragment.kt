@@ -29,15 +29,31 @@ class GameFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        updateUI()
+        viewModel.currentWord.observe(viewLifecycleOwner, {
+            bind.textViewUnscrambledWord.text = it
+        })
+        viewModel.count.observe(viewLifecycleOwner, {
+            if ( it > MAX_NO_OF_WORDS ){
+                showFinalDialog()
+            }
+            else {
+                bind.wordCount.text = "$it of $MAX_NO_OF_WORDS words"
+            }
+        })
+        viewModel.score.observe(viewLifecycleOwner, {
+            bind.score.text = "SCORE: $it"
+        })
         bind.skip.setOnClickListener { onSkip() }
         bind.submit.setOnClickListener { onSubmit() }
     }
 
     private fun onSkip(){
+        bind.textField.editText?.text?.clear()
         viewModel.increaseCount()
         setErrorTextField(false)
-        updateUI()
+
+        viewModel.getNextWord()
+//        updateUI()
     }
 
     private fun onSubmit() {
@@ -61,14 +77,14 @@ class GameFragment : Fragment() {
         }
     }
 
-    private fun updateUI() {
-        if ( viewModel.count > MAX_NO_OF_WORDS ) {
-            showFinalDialog()
-            return
-        }
-        bind.textViewUnscrambledWord.text = viewModel.getUnscrambledWord()
-        bind.textField.editText?.text?.clear()
-    }
+//    private fun updateUI() {
+//        if ( viewModel.count > MAX_NO_OF_WORDS ) {
+//            showFinalDialog()
+//            return
+//        }
+//        bind.textViewUnscrambledWord.text = viewModel.getUnscrambledWord()
+//        bind.textField.editText?.text?.clear()
+//    }
 
     private fun showFinalDialog(){
         MaterialAlertDialogBuilder(requireContext())
@@ -84,7 +100,7 @@ class GameFragment : Fragment() {
     private fun restartGame(){
         viewModel.reset()
         setErrorTextField(false)
-        updateUI()
+//        updateUI()
     }
 
 }

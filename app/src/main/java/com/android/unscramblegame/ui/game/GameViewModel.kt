@@ -1,35 +1,38 @@
 package com.android.unscramblegame.ui.game
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class GameViewModel : ViewModel() {
 
-    private var _count = 0
-    val count get() = _count
+    private var _count = MutableLiveData<Int>()
+    val count: LiveData<Int> get() = _count
 
-    private var _score: Int = 0
-    val score: Int get() = _score
+    private var _score = MutableLiveData<Int>()
+    val score: LiveData<Int> get() = _score
 
-    private lateinit var _currentWord: String
+    private val _currentWord = MutableLiveData<String>()
+    val currentWord: LiveData<String> get() = _currentWord
 
     private var wordsList = mutableListOf<String>()
 
-    fun increaseCount(){
-        _count += 1;
+    init {
+        reset()
     }
 
-    fun increaseScore(){
-        _score += SCORE_INCREASE
-    }
+    fun increaseCount(){ _count.value = _count.value?.plus(1) }
 
-    fun getUnscrambledWord(): String{
-        getNextWord()
-        var temp = _currentWord.toCharArray()
-        while ( String(temp) == _currentWord )
-            temp.shuffle()
+    fun increaseScore(){ _score.value = _score.value?.plus(SCORE_INCREASE) }
 
-        return String(temp)
-    }
+//    fun getUnscrambledWord(): String{
+//        getNextWord()
+//        var temp = _currentWord.value?.toCharArray()
+//        while ( String(temp!!) == _currentWord.value )
+//            temp.shuffle()
+//
+//        return String(temp)
+//    }
 
     fun isCorrect(ans : String): Boolean{
         for ( word in allWordsList ){
@@ -38,9 +41,12 @@ class GameViewModel : ViewModel() {
         return false
     }
 
-    private fun getNextWord(){
+    /* private */ fun getNextWord(){
+        if (_count.value?.equals(MAX_NO_OF_WORDS + 1) == true){
+            return
+        }
         val word = allWordsList.random()
-        _currentWord = word
+        _currentWord.value = word
         if ( !(wordsList.contains(word)) ){
             wordsList.add(word)
             return
@@ -49,9 +55,10 @@ class GameViewModel : ViewModel() {
     }
 
     fun reset() {
-        _score = 0
-        _count = 0
+        _score.value = 0
+        _count.value = 1
         wordsList.clear()
+        getNextWord()
     }
 
 }
