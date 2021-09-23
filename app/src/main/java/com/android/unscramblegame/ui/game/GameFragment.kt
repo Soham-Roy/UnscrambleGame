@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.android.unscramblegame.R
@@ -24,30 +25,39 @@ class GameFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        bind = GameFragmentBinding.inflate(layoutInflater)
+        bind = DataBindingUtil.inflate(inflater, R.layout.game_fragment, container, false)
         return bind.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        viewModel.currentWord.observe(viewLifecycleOwner, {
-            bind.textViewUnscrambledWord.text = it
-        })
-        viewModel.count.observe(viewLifecycleOwner, {
-            if ( it > MAX_NO_OF_WORDS ){
-                showFinalDialog()
-            }
-            else {
-                bind.wordCount.text = "$it of $MAX_NO_OF_WORDS words"
-            }
-        })
-        viewModel.score.observe(viewLifecycleOwner, {
-            bind.score.text = "SCORE: $it"
-        })
+        bind.gameViewModel = viewModel
+        bind.maxNoOfWords = MAX_NO_OF_WORDS
+        bind.lifecycleOwner = viewLifecycleOwner
+
+//        viewModel.currentWord.observe(viewLifecycleOwner, {
+//            bind.textViewUnscrambledWord.text = it
+//        })
+//        viewModel.count.observe(viewLifecycleOwner, {
+//            if ( it > MAX_NO_OF_WORDS ){
+//                showFinalDialog()
+//            }
+//            else {
+//                bind.wordCount.text = "$it of $MAX_NO_OF_WORDS words"
+//            }
+//        })
+//        viewModel.score.observe(viewLifecycleOwner, {
+//            bind.score.text = "SCORE: $it"
+//        })
+
         bind.skip.setOnClickListener { onSkip() }
         bind.submit.setOnClickListener { onSubmit() }
     }
 
     private fun onSkip(){
+        if ( !viewModel.nextWord() ){
+            showFinalDialog()
+            return
+        }
         bind.textField.editText?.text?.clear()
         viewModel.increaseCount()
         setErrorTextField(false)
@@ -58,7 +68,7 @@ class GameFragment : Fragment() {
 
     private fun onSubmit() {
         val ans: String = bind.textField.editText?.text.toString()
-        if ( viewModel.isCorrect(ans) ){
+        if ( viewModel.isCorrect(ans.lowercase()) ){
             viewModel.increaseScore()
             onSkip()
         }
@@ -89,7 +99,7 @@ class GameFragment : Fragment() {
     private fun showFinalDialog(){
         MaterialAlertDialogBuilder(requireContext())
             .setTitle( getString(R.string.congratulations) )
-            .setMessage( getString(R.string.you_scored) )
+            .setMessage( getString(R.string.you_scored, viewModel.score.value) )
             .setNegativeButton( getString(R.string.exit) ){ _, _ -> activity?.finish() }
             .setPositiveButton( getString(R.string.play_again) ){ _, _ ->
                 restartGame()

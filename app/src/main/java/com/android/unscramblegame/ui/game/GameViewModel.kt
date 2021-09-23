@@ -1,7 +1,11 @@
 package com.android.unscramblegame.ui.game
 
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.TtsSpan
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 
 class GameViewModel : ViewModel() {
@@ -13,7 +17,31 @@ class GameViewModel : ViewModel() {
     val score: LiveData<Int> get() = _score
 
     private val _currentWord = MutableLiveData<String>()
-    val currentWord: LiveData<String> get() = _currentWord
+//    val currentWord: LiveData<String> get() = Transformations.map(_currentWord) {
+//        var temp = it.toCharArray()
+//        while (String(temp!!) == it)
+//            temp.shuffle()
+//
+//        String(temp)
+//    }
+    val currentWord: LiveData<Spannable> get() = Transformations.map(_currentWord) {
+        var temp = it.toCharArray()
+        while (String(temp!!) == it)
+            temp.shuffle()
+
+        val currString = String(temp)
+
+        run {
+            val spannable: Spannable = SpannableString(currString)
+            spannable.setSpan(
+                TtsSpan.VerbatimBuilder(currString).build(),
+                0,
+                currString.length,
+                Spannable.SPAN_INCLUSIVE_INCLUSIVE
+            )
+            spannable
+        }
+    }
 
     private var wordsList = mutableListOf<String>()
 
@@ -59,6 +87,13 @@ class GameViewModel : ViewModel() {
         _count.value = 1
         wordsList.clear()
         getNextWord()
+    }
+
+    fun nextWord(): Boolean {
+        if (_count.value!! >= MAX_NO_OF_WORDS){
+            return false
+        }
+        return true
     }
 
 }
